@@ -1,0 +1,111 @@
+name: release
+
+on:
+  push:
+    tags:
+      - "v*.*.*"
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    name: build ${{ matrix.goos }}-${{ matrix.goarch }}
+    runs-on: ${{ matrix.runner }}
+    strategy:
+      matrix:
+        include:
+          - { goos: linux,   goarch: amd64, runner: ubuntu-latest,  ext: ""    }
+          - { goos: linux,   goarch: arm64, runner: ubuntu-latest,  ext: ""    }
+          - { goos: darwin,  goarch: amd64, runner: macos-latest,   ext: ""    }
+          - { goos: darwin,  goarch: arm64, runner: macos-latest,   ext: ""    }
+          - { goos: windows, goarch: amd64, runner: windows-latest, ext: ".exe"}
+          - { goos: windows, goarch: arm64, runner: windows-latest, ext: ".exe"}
+
+    env:
+      CGO_ENABLED: "0"
+      VERSION: ${{ github.ref_name }}
+      COMMIT: ${{ github.sha }}
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-go@v5
+        with:
+          go-version: "1.22"
+
+      - name: Set build date
+        id: meta
+        run: echo "DATE=$(date -u +%Y-%m-%dT%H:%M:%SZ)" >> $GITHUB_OUTPUT
+        shell: bash
+
+      - name: Build
+        run: |
+          mkdir -p dist
+          OUT="dai${{ matrix.ext }}"
+          GOOS=${{ matrix.goos }} GOARCH=${{ matrix.goarch }} \
+          go build -trimpath -ldflags "-s -w \
+            -X github.com/gorankrgovic/dai/internal/buildinfo.Version=${VERSION} \
+            -X github.com/gorankrgovic/dai/internal/buildinfo.Commit=${COMMIT} \
+            -X github.com/gorankrgovic/dai/internal/buildinfo.Date=${{ steps.meta.outputs.DATE }}" \
+            -o "${OUT}" ./...
+          DIR="dai_${VERSION}_${{ matrix.goos }}-${{ matrix.goarch }}"
+          mkdir -p "dist/${DIR}"
+          mv "${OUT}" "dist/${DIR}/"
+          # include a tiny README
+          echo "DAI ${VERSION} (${ { matrix.goos }}-${{ matrix.goarch }})" > "dist/${DIR}/README.txt"
+        shell: bash
+
+      - name: Archive
+        run: |
+          cd dist
+          DIR="dai_${VERSION}_${{ matrix.goos }}-${{ matrix.goarch }}"
+          if [ "${{ matrix.goos }}" = "windows" ]; then
+            7z a "${DIR}.zip" "${DIR}" > /dev/null
+          else
+            tar -C . -czf "${DIR}.tar.gz" "${DIR}"
+          fi
+        shell: bash
+
+      - name: Checksums
+        run: |
+          cd dist
+          shopt -s nullglob
+          for f in dai_${VERSION}_*.*; do
+            if command -v shasum >/dev/null 2>&1; then
+              shasum -a 256 "$f" | awk '{print $1 "  " FILENAME}' FILENAME="$f"
+            else
+              sha256sum "$f"
+            fi
+          done >> checksums.txt
+        shell: bash
+
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: dai_${{ env.VERSION }}_${{ matrix.goos }}-${{ matrix.goarch }}
+          path: |
+            dist/dai_${{ env.VERSION }}_${{ matrix.goos }}-${{ matrix.goarch }}.tar.gz
+            dist/dai_${{ env.VERSION }}_${{ matrix.goos }}-${{ matrix.goarch }}.zip
+            dist/checksums.txt
+        if: always()
+
+  release:
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          path: dist
+      - name: Gather files
+        run: |
+          mkdir -p upload
+          find dist -type f -name "dai_*.*" -exec cp {} upload/ \;
+          # merge checksums
+          cat dist/**/checksums.txt > upload/checksums.txt
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: upload/*
+          tag_name: ${{ github.ref_name }}
+          generate_release_notes: true
