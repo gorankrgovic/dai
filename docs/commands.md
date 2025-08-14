@@ -46,6 +46,7 @@ dai ignore [flags]
 ```
 
 **Flags:**
+
 | Flag          | Description                                                   | Default         |
 |---------------|---------------------------------------------------------------|-----------------|
 | `--path`      | Path to create the `.daiignore` file (relative to project root) | `.daiignore`    |
@@ -63,6 +64,7 @@ dai init [flags]
 ```
 
 **Flags:**
+
 | Flag         | Description                                                        | Default |
 |--------------|--------------------------------------------------------------------|---------|
 | `-f, --force`   | Overwrite existing `.dai/project.yaml` without prompt            | `false` |
@@ -93,6 +95,7 @@ dai triage 8282882 --dry-run
 ```
 
 **Flags:**
+
 | Flag             | Description                                                        | Default                                        |
 |------------------|--------------------------------------------------------------------|------------------------------------------------|
 | `--ext`          | Comma-separated file extensions to analyze                         | `.js,.jsx,.ts,.tsx,.vue,.php,.py,.go`          |
@@ -115,6 +118,7 @@ dai triage-local path/to/file.go [flags]
 ```
 
 **Flags:**
+
 | Flag             | Description                                          | Default             |
 |------------------|------------------------------------------------------|---------------------|
 | `--model`        | Override OpenAI model from config (optional)          | *(none)*            |
