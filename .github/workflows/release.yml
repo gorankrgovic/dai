@@ -132,6 +132,8 @@ jobs:
         with:
           repository: gorankrgovic/dai-releases
           files: upload/*
-          tag_name: ${{ github.ref_name }}
+          tag_name: ${{ github.ref_name }}     # npr. v0.2.2
+          target_commitish: main               # <— bitno: branch koji postoji u public repou
           generate_release_notes: true
-          token: ${{ secrets.RELEASES_TOKEN }}
+        env:
+          GITHUB_TOKEN: ${{ secrets.RELEASES_TOKEN }}  # PAT sa Contents: Read & write
