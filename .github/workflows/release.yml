@@ -48,12 +48,11 @@ jobs:
             -X github.com/gorankrgovic/dai/internal/buildinfo.Version=${VERSION} \
             -X github.com/gorankrgovic/dai/internal/buildinfo.Commit=${COMMIT} \
             -X github.com/gorankrgovic/dai/internal/buildinfo.Date=${{ steps.meta.outputs.DATE }}" \
-            -o "${OUT}" ./...
+            -o "${OUT}" ./
           DIR="dai_${VERSION}_${{ matrix.goos }}-${{ matrix.goarch }}"
           mkdir -p "dist/${DIR}"
           mv "${OUT}" "dist/${DIR}/"
-          # include a tiny README
-          echo "DAI ${VERSION} (${ { matrix.goos }}-${{ matrix.goarch }})" > "dist/${DIR}/README.txt"
+          echo "DAI ${VERSION} (${{ matrix.goos }}-${{ matrix.goarch }})" > "dist/${DIR}/README.txt"
         shell: bash
 
       - name: Archive
