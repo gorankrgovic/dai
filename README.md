@@ -1,4 +1,4 @@
-# DAI – Debug & Develop AI CLI
+# DAI – Debug & Develop AI CLI Tool
 
 [![License: GPL v3](https://img.shields.io/badge/License-GPLv3-blue.svg)](https://www.gnu.org/licenses/gpl-3.0)
 [![Go Version](https://img.shields.io/github/go-mod/go-version/gorankrgovic/dai)](https://go.dev/)
