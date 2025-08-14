@@ -795,23 +795,65 @@ dai completion fish
 <p>Create a default <code>.daiignore</code> file in the project root (uses <code>.gitignore</code> syntax).</p>
 <pre><code class="language-bash">dai ignore [flags]
 </code></pre>
-<p><strong>Flags:</strong>
-| Flag          | Description                                                   | Default         |
-|---------------|---------------------------------------------------------------|-----------------|
-| <code>--path</code>      | Path to create the <code>.daiignore</code> file (relative to project root) | <code>.daiignore</code>    |
-| <code>--force</code>     | Overwrite existing file without prompting                     | <code>false</code>         |
-| <code>--yes</code>       | Non-interactive: assume “yes” to prompts                      | <code>false</code>         |</p>
+<p><strong>Flags:</strong></p>
+<table>
+<thead>
+<tr>
+<th>Flag</th>
+<th>Description</th>
+<th>Default</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>--path</code></td>
+<td>Path to create the <code>.daiignore</code> file (relative to project root)</td>
+<td><code>.daiignore</code></td>
+</tr>
+<tr>
+<td><code>--force</code></td>
+<td>Overwrite existing file without prompting</td>
+<td><code>false</code></td>
+</tr>
+<tr>
+<td><code>--yes</code></td>
+<td>Non-interactive: assume “yes” to prompts</td>
+<td><code>false</code></td>
+</tr>
+</tbody>
+</table>
 <hr />
 <h2 id="dai-init"><code>dai init</code></h2>
 <p>Initialize DAI for the current project by creating <code>.dai/project.yaml</code>.</p>
 <pre><code class="language-bash">dai init [flags]
 </code></pre>
-<p><strong>Flags:</strong>
-| Flag         | Description                                                        | Default |
-|--------------|--------------------------------------------------------------------|---------|
-| <code>-f, --force</code>   | Overwrite existing <code>.dai/project.yaml</code> without prompt            | <code>false</code> |
-| <code>-v, --verbose</code> | Print detected git info                                          | <code>false</code> |
-| <code>-p, --path</code>    | Project path (defaults to current directory)                     | <code>.</code>     |</p>
+<p><strong>Flags:</strong></p>
+<table>
+<thead>
+<tr>
+<th>Flag</th>
+<th>Description</th>
+<th>Default</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>-f, --force</code></td>
+<td>Overwrite existing <code>.dai/project.yaml</code> without prompt</td>
+<td><code>false</code></td>
+</tr>
+<tr>
+<td><code>-v, --verbose</code></td>
+<td>Print detected git info</td>
+<td><code>false</code></td>
+</tr>
+<tr>
+<td><code>-p, --path</code></td>
+<td>Project path (defaults to current directory)</td>
+<td><code>.</code></td>
+</tr>
+</tbody>
+</table>
 <hr />
 <h2 id="dai-triage"><code>dai triage</code></h2>
 <p>Analyze a commit and open a single GitHub issue with findings.<br />
@@ -828,29 +870,95 @@ dai triage 8282882
 # Dry run without creating an issue
 dai triage 8282882 --dry-run
 </code></pre>
-<p><strong>Flags:</strong>
-| Flag             | Description                                                        | Default                                        |
-|------------------|--------------------------------------------------------------------|------------------------------------------------|
-| <code>--ext</code>          | Comma-separated file extensions to analyze                         | <code>.js,.jsx,.ts,.tsx,.vue,.php,.py,.go</code>          |
-| <code>--dry-run</code>      | Print the would-be GitHub issue without creating it                 | <code>false</code>                                        |
-| <code>--model</code>        | Override OpenAI model from config (optional)                        | <em>(none)</em>                                       |
-| <code>--max-file-kb</code>  | Max file size per analyzed file (KB)                                | <code>80</code>                                           |
-| <code>--ignore</code>       | Path to ignore file (gitignore syntax), relative to project root    | <code>.daiignore</code>                                   |
-| <code>--always-open</code>  | Always create a GitHub issue even when no findings                  | <code>false</code>                                        |
-| <code>--diff-context</code> | Number of context lines per diff hunk                               | <code>3</code>                                            |</p>
+<p><strong>Flags:</strong></p>
+<table>
+<thead>
+<tr>
+<th>Flag</th>
+<th>Description</th>
+<th>Default</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>--ext</code></td>
+<td>Comma-separated file extensions to analyze</td>
+<td><code>.js,.jsx,.ts,.tsx,.vue,.php,.py,.go</code></td>
+</tr>
+<tr>
+<td><code>--dry-run</code></td>
+<td>Print the would-be GitHub issue without creating it</td>
+<td><code>false</code></td>
+</tr>
+<tr>
+<td><code>--model</code></td>
+<td>Override OpenAI model from config (optional)</td>
+<td><em>(none)</em></td>
+</tr>
+<tr>
+<td><code>--max-file-kb</code></td>
+<td>Max file size per analyzed file (KB)</td>
+<td><code>80</code></td>
+</tr>
+<tr>
+<td><code>--ignore</code></td>
+<td>Path to ignore file (gitignore syntax), relative to project root</td>
+<td><code>.daiignore</code></td>
+</tr>
+<tr>
+<td><code>--always-open</code></td>
+<td>Always create a GitHub issue even when no findings</td>
+<td><code>false</code></td>
+</tr>
+<tr>
+<td><code>--diff-context</code></td>
+<td>Number of context lines per diff hunk</td>
+<td><code>3</code></td>
+</tr>
+</tbody>
+</table>
 <hr />
 <h2 id="dai-triage-local"><code>dai triage-local</code></h2>
 <p>Analyze a single local file and append findings to <code>.dai/local.log</code>.</p>
 <pre><code class="language-bash">dai triage-local path/to/file.go [flags]
 </code></pre>
-<p><strong>Flags:</strong>
-| Flag             | Description                                          | Default             |
-|------------------|------------------------------------------------------|---------------------|
-| <code>--model</code>        | Override OpenAI model from config (optional)          | <em>(none)</em>            |
-| <code>--max-file-kb</code>  | Max bytes per analyzed file (KB)                      | <code>200</code>               |
-| <code>--log</code>          | Path to local log file (relative to project root)     | <code>.dai/local.log</code>    |
-| <code>--format</code>       | Log format (<code>md</code> or <code>json</code>)                           | <code>md</code>                 |
-| <code>--no-stdout</code>    | Do not print findings to stdout (log only)            | <code>false</code>             |</p>
+<p><strong>Flags:</strong></p>
+<table>
+<thead>
+<tr>
+<th>Flag</th>
+<th>Description</th>
+<th>Default</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>--model</code></td>
+<td>Override OpenAI model from config (optional)</td>
+<td><em>(none)</em></td>
+</tr>
+<tr>
+<td><code>--max-file-kb</code></td>
+<td>Max bytes per analyzed file (KB)</td>
+<td><code>200</code></td>
+</tr>
+<tr>
+<td><code>--log</code></td>
+<td>Path to local log file (relative to project root)</td>
+<td><code>.dai/local.log</code></td>
+</tr>
+<tr>
+<td><code>--format</code></td>
+<td>Log format (<code>md</code> or <code>json</code>)</td>
+<td><code>md</code></td>
+</tr>
+<tr>
+<td><code>--no-stdout</code></td>
+<td>Do not print findings to stdout (log only)</td>
+<td><code>false</code></td>
+</tr>
+</tbody>
+</table>
 <hr />
 <h2 id="global-flags">Global Flags</h2>
 <table>
