@@ -104,7 +104,7 @@ var triageCmd = &cobra.Command{
 		}
 		if opts.DryRun {
 			fmt.Println("— DRY RUN —")
-			fmt.Println(result.Body) // već formatiran body
+			fmt.Println(result.Body)
 			return nil
 		}
 		if result.Skipped {

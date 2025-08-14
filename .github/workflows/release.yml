@@ -94,14 +94,14 @@ jobs:
     needs: build
     runs-on: ubuntu-latest
     steps:
-      # 1) Checkout privatnog repoa zbog git log-a (ovo MORA prvo)
-      - name: Checkout private repo (for changelog)
+      # 1) Checkout za changelog
+      - name: Checkout main repo
         uses: actions/checkout@v4
         with:
           fetch-depth: 0
           ref: ${{ github.ref }}
 
-      # 2) Generiši changelog i upiši ga u upload/CHANGELOG.md
+      # 2) Generate changelog
       - name: Generate changelog from commits
         run: |
           set -euo pipefail
@@ -149,21 +149,22 @@ jobs:
               }'
           } > upload/CHANGELOG.md
 
-      # 3) Sada preuzmi artefakte iz build matrice
+      # 3) Preuzmi build artefakte
       - uses: actions/download-artifact@v4
         with:
           path: dist
           merge-multiple: true
 
-      # 4) Skupi fajlove (OVO više neće biti obrisano)
+      # 4) Pripremi fajlove za release
       - name: Gather files
         run: |
           set -euo pipefail
           mkdir -p upload
           shopt -s nullglob
           cp dist/dai_v*.tar.gz upload/ || true
-          cp dist/dai_v*.zip    upload/ || true
+          cp dist/dai_v*.zip upload/ || true
           cat dist/checksums-*.txt > upload/checksums.txt
+
           VERSION="${GITHUB_REF_NAME#v}"
           for f in upload/dai_v${VERSION}_*; do
             base="$(basename "$f")"
@@ -171,29 +172,16 @@ jobs:
             cp -f "$f" "$alias"
           done
 
-      - name: (debug) list collected files
+      - name: List collected files
         run: ls -la upload
 
-      # 5) Privatni release (kao do sada)
-      - name: Create Release (private repo)
+      # 5) Kreiraj release u istom repo-u
+      - name: Create GitHub Release
         uses: softprops/action-gh-release@v2
         with:
-          files: |
-            upload/dai_v*.tar.gz
-            upload/dai_v*.zip
-            upload/checksums.txt
-          tag_name: ${{ github.ref_name }}
-          generate_release_notes: true
-
-      # 6) Public release: BINARIES + CHANGELOG body
-      - name: Create Release (public dai-releases)
-        uses: softprops/action-gh-release@v2
-        with:
-          repository: gorankrgovic/dai-releases
           files: upload/*
           tag_name: ${{ github.ref_name }}
-          target_commitish: main
           body_path: upload/CHANGELOG.md
           generate_release_notes: false
         env:
-          GITHUB_TOKEN: ${{ secrets.RELEASES_TOKEN }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

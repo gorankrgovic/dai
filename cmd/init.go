@@ -52,7 +52,7 @@ var initCmd = &cobra.Command{
 			return fmt.Errorf("git remote 'origin' not found at %s.\nRun: git remote add origin <url>", absTarget)
 		}
 
-		// uvek radi u git root-u (podržava i podfoldere u repo-u)
+		// works inside git root-u (and subfolders in repo)
 		repoRoot, _ := gitutil.RepoRoot(absTarget)
 		baseDir := repoRoot
 		if baseDir == "" {
@@ -84,13 +84,13 @@ var initCmd = &cobra.Command{
 			}
 		}
 
-		// 3) sačuvaj project config u ROOT-u
+		// 3) project config inside ROOT
 		p := &project.Project{Provider: "github", Owner: owner, Repo: repo}
 		if err := project.Save(baseDir, p); err != nil {
 			return err
 		}
 
-		// 4) dodaj .dai u .gitignore u ROOT-u (ako nije tamo)
+		// 4) add .dai inside .gitignore
 		gitignorePath := filepath.Join(baseDir, ".gitignore")
 		added, err := ensureGitignoreHasEntry(gitignorePath, ".dai")
 		if err != nil {
@@ -105,7 +105,7 @@ var initCmd = &cobra.Command{
 			}
 		}
 
-		// ▼ DODAJ OVO: ponudi kreiranje .daiignore u project root-u
+		// ▼ ADD: creation of .daiignore
 		if err := promptCreateDaiIgnore(baseDir); err != nil {
 			return err
 		}
@@ -117,7 +117,7 @@ var initCmd = &cobra.Command{
 	},
 }
 
-// pametniji check za prisustvo .dai
+// smart check for .dai
 func ensureGitignoreHasEntry(path string, entry string) (bool, error) {
 	// ako .gitignore ne postoji → kreiraj ga sa entry
 	if _, err := os.Stat(path); os.IsNotExist(err) {
@@ -127,7 +127,6 @@ func ensureGitignoreHasEntry(path string, entry string) (bool, error) {
 		return true, nil
 	}
 
-	// proveri par tipičnih varijanti
 	equivalents := map[string]struct{}{
 		entry:         {},
 		entry + "/":   {},
@@ -145,14 +144,14 @@ func ensureGitignoreHasEntry(path string, entry string) (bool, error) {
 	for s.Scan() {
 		line := strings.TrimSpace(s.Text())
 		if _, ok := equivalents[line]; ok {
-			return false, nil // već postoji
+			return false, nil // already exists
 		}
 	}
 	if err := s.Err(); err != nil {
 		return false, err
 	}
 
-	// dodaj na kraj
+	// add to the end
 	af, err := os.OpenFile(path, os.O_APPEND|os.O_WRONLY, 0o644)
 	if err != nil {
 		return false, err

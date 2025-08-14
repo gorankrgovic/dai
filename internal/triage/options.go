@@ -12,13 +12,13 @@ type Options struct {
 	MaxFileBytes int64
 	IgnoreFile   string
 	DryRun       bool
-	AlwaysOpen   bool // NEW: forsiraj kreiranje issue-a i kad nema nalaza
-	DiffContext  int  // NEW: broj kontekst linija po hunku (npr. 3)
+	AlwaysOpen   bool
+	DiffContext  int
 }
 
 type Result struct {
 	URL     string
 	Number  int
 	Body    string
-	Skipped bool // NEW: true ako smo preskočili otvaranje issue-a (nema nalaza)
+	Skipped bool
 }

@@ -37,7 +37,7 @@ func RemoteOriginURL(dir string) (string, bool) {
 	return u, true
 }
 
-// SSH ili HTTPS GitHub URL → owner/repo
+// SSH or HTTPS GitHub URL
 func ParseOwnerRepo(remote string) (owner, repo string) {
 	ssh := regexp.MustCompile(`git@[^:]+:([^/]+)/([^\.]+)(?:\.git)?$`)
 	http := regexp.MustCompile(`https?://[^/]+/([^/]+)/([^\.]+)(?:\.git)?$`)

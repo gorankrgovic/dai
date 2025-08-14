@@ -5,7 +5,6 @@ import (
 	"strings"
 )
 
-// HeadCommit vraća hash HEAD commita, radeći u zadatom repo root-u.
 func HeadCommit(dir string) (string, error) {
 	out, err := runGit(dir, "rev-parse", "HEAD")
 	if err != nil {
@@ -14,7 +13,6 @@ func HeadCommit(dir string) (string, error) {
 	return strings.TrimSpace(out), nil
 }
 
-// FilesInCommit vraća listu fajlova iz commita.
 func FilesInCommit(dir, commit string) ([]string, error) {
 	out, err := runGit(dir, "show", "--name-only", "--pretty=", commit)
 	if err != nil {
@@ -34,7 +32,6 @@ func FilesInCommit(dir, commit string) ([]string, error) {
 	return files, nil
 }
 
-// FileAtCommit vraća sadržaj fajla iz commita, uz opciono trunciranje po veličini.
 func FileAtCommit(dir, commit, path string, maxBytes int64) (content string, truncated bool, err error) {
 	out, err := runGit(dir, "show", fmt.Sprintf("%s:%s", commit, path))
 	if err != nil {

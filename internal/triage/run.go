@@ -29,7 +29,7 @@ func Run(ctx context.Context, opt Options) (*Result, error) {
 	if err != nil {
 		return nil, fmt.Errorf("diff hunks: %w", err)
 	}
-	// filter po ekstenzijama i ignore pravilima
+
 	filtered := make([]gitutil.FileDiff, 0, len(fileDiffs))
 	for _, fd := range fileDiffs {
 		if fd.Binary {
@@ -47,7 +47,6 @@ func Run(ctx context.Context, opt Options) (*Result, error) {
 		filtered = append(filtered, fd)
 	}
 
-	// LLM analiza po fajlu, ali šaljemo SAMO hunk-ove (kao jedan concatenated diff)
 	findings := make([]Finding, 0, len(filtered))
 	for _, fd := range filtered {
 		blocks := make([]string, 0, len(fd.Hunks))
@@ -55,8 +54,8 @@ func Run(ctx context.Context, opt Options) (*Result, error) {
 			var sb strings.Builder
 			sb.WriteString(fmt.Sprintf("@@ -%d,%d +%d,%d @@\n", h.OldStart, h.OldLines, h.NewStart, h.NewLines))
 			for _, ln := range h.Lines {
-				// ostavi i '-' i ' ' i '+' linije — modelu treba minimalni kontekst,
-				// ali najveći fokus je na '+'
+				// leave i '-' i ' ' i '+' lines — model needs minimal context,
+				// biggest focus is on '+'
 				sb.WriteString(ln)
 				sb.WriteString("\n")
 			}
@@ -64,7 +63,7 @@ func Run(ctx context.Context, opt Options) (*Result, error) {
 		}
 		ff, err := analyzeDiff(ctx, opt.OpenAIKey, opt.Model, fd.Path, blocks)
 		if err != nil {
-			// non-fatal: preskačemo konkretan fajl
+			// non-fatal:
 			continue
 		}
 		findings = append(findings, ff)

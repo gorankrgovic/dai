@@ -7,26 +7,20 @@ import (
 	"strings"
 )
 
-// FileDiff predstavlja diff za jedan fajl sa skupom hunks-a.
 type FileDiff struct {
 	Path   string
 	Hunks  []Hunk
 	Binary bool
 }
 
-// Hunk predstavlja jedan "@@ -a,b +c,d @@" blok sa linijama diffa.
 type Hunk struct {
 	OldStart int
 	OldLines int
 	NewStart int
 	NewLines int
-	// Lines su samo patch linije (počne odmah posle @@ ... @@),
-	// uključujući prefikse ' ', '+', '-' bez newline-a.
-	Lines []string
+	Lines    []string
 }
 
-// DiffHunks vraća diff hunks-e za dati commit sa zadatim brojem kontekst linija.
-// Ako contextLines < 0, koristi default git-a; tipično stavi 3.
 func DiffHunks(dir, commit string, contextLines int) ([]FileDiff, error) {
 	args := []string{"show", "--no-color", "--format="}
 	if contextLines >= 0 {
@@ -66,17 +60,15 @@ func DiffHunks(dir, commit string, contextLines int) ([]FileDiff, error) {
 	for sc.Scan() {
 		line := sc.Text()
 
-		// Novi fajl blok
 		if m := reDiffHeader.FindStringSubmatch(line); m != nil {
 			flushHunk()
 			if cur != nil {
 				diffs = append(diffs, *cur)
 			}
-			cur = &FileDiff{Path: m[2]} // koristimo desni path (b/<path>)
+			cur = &FileDiff{Path: m[2]}
 			continue
 		}
 
-		// Binary patch
 		if reBinary.MatchString(line) {
 			if cur != nil {
 				cur.Binary = true
@@ -84,7 +76,6 @@ func DiffHunks(dir, commit string, contextLines int) ([]FileDiff, error) {
 			continue
 		}
 
-		// +++ b/path => potvrdi path (nekad rename)
 		if m := reNewFile.FindStringSubmatch(line); m != nil {
 			if cur != nil {
 				cur.Path = m[1]
@@ -92,7 +83,6 @@ func DiffHunks(dir, commit string, contextLines int) ([]FileDiff, error) {
 			continue
 		}
 
-		// Hunk header
 		if m := reHunk.FindStringSubmatch(line); m != nil {
 			flushHunk()
 			curHunk = &Hunk{
@@ -105,7 +95,6 @@ func DiffHunks(dir, commit string, contextLines int) ([]FileDiff, error) {
 			continue
 		}
 
-		// Linije diffa unutar hunka
 		if curHunk != nil {
 			if len(line) > 0 {
 				switch line[0] {
@@ -114,7 +103,6 @@ func DiffHunks(dir, commit string, contextLines int) ([]FileDiff, error) {
 					continue
 				}
 			}
-			// Ako nije patch linija, znači da je završio hunk
 			flushHunk()
 		}
 	}

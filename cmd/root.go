@@ -20,7 +20,7 @@ func versionString() string {
 	if v == "" {
 		v = "dev"
 	}
-	// dodaj kratki commit i datum ako postoje
+
 	if c := buildinfo.Commit; c != "" {
 		if len(c) > 8 {
 			c = c[:8]
@@ -37,17 +37,15 @@ var rootCmd = &cobra.Command{
 	Use:     "dai",
 	Short:   "DAI — Debug & Develop AI CLI",
 	Long:    "DAI — Debug & Develop AI. Triage and autofix directly from terminal.",
-	Version: versionString(), // <- sada vuče iz buildinfo
+	Version: versionString(),
 }
 
 func init() {
-	// Samo zbog --help prikaza; realni parsing radimo ručno pre Execute()
 	rootCmd.PersistentFlags().StringVarP(&parrotMode, "parrot", "p", "", "Summon the DAI parrot (modes: party, insult, wise)")
 }
 
 // Execute is the main entry point
 func Execute() {
-	// Ručni early-parse da radi i bez subkomandi (dai --parrot)
 	mode := parseParrotMode(os.Args)
 	if mode != "" {
 		showParrot(mode)
@@ -116,21 +114,20 @@ func showParrot(mode string) {
 		"Optimize last; test first.",
 	}
 
-	// Izbor poruke po modu
 	msg := ""
 	switch mode {
 	case "insult":
 		msg = pick(insultMsgs)
 	case "wise":
 		msg = pick(wiseMsgs)
-	default: // basic & party defaultuju na basic poruke
+	default: // basic & party
 		msg = pick(basicMsgs)
 	}
 
-	// Bubble iznad papagaja
+	// Bubble
 	bubble := renderSpeechBubble(msg, 48)
 
-	// Deluxe ASCII papagaj
+	// Deluxe ASCII
 	parrotArt := `
                       @@@@@@@@@@@@@@@@@@
                   @@@@@@@@@@@@@@@@@@@@@@@@@@
@@ -160,21 +157,21 @@ func showParrot(mode string) {
 ==@@@@@@==@@==@@@@@@==@@@@@@@@@@
 `
 
-	// PARTY efekat pre bannera (konfeti)
+	// PARTY
 	if mode == "party" {
-		fetti(5, 64, 90*time.Millisecond) // 5 “talasa” konfeta
+		fetti(5, 64, 90*time.Millisecond) // 5 waves of confetti
 	}
 
-	// Ispis
+	// Write
 	fmt.Println(bubble)
 	fmt.Println(parrotArt)
 
-	// PARTY outro konfeti
+	// PARTY outro
 	if mode == "party" {
 		fetti(3, 64, 80*time.Millisecond)
 	}
 
-	// Ako korisnik ukuca nepoznat mod, daj hint
+	// Hint on error
 	if mode != "basic" && mode != "party" && mode != "insult" && mode != "wise" {
 		fmt.Println("ℹ️  Unknown parrot mode. Try: basic (default), party, insult, wise")
 	}
@@ -182,7 +179,7 @@ func showParrot(mode string) {
 
 func pick[T any](arr []T) T { return arr[rand.Intn(len(arr))] }
 
-// Minimal terminal “konfeti” bez zavisnosti (ANSI boje + random simboli)
+// Minimal terminal
 func fetti(waves, width int, delay time.Duration) {
 	colors := []string{
 		"\x1b[31m", "\x1b[32m", "\x1b[33m",
@@ -210,7 +207,7 @@ func fetti(waves, width int, delay time.Duration) {
 	}
 }
 
-// Render talk-bubble sa “strelicom” ka kljunu
+// Render talk-bubble
 func renderSpeechBubble(text string, width int) string {
 	lines := wrap(text, width)
 	var sb strings.Builder
@@ -219,7 +216,7 @@ func renderSpeechBubble(text string, width int) string {
 		sb.WriteString(fmt.Sprintf(" / %-*s \\\n", width, line))
 	}
 	sb.WriteString("  " + strings.Repeat("-", width+2) + "\n")
-	// strelica preko dve linije
+
 	sb.WriteString("          \\\n")
 	sb.WriteString("           \\\n")
 	return sb.String()

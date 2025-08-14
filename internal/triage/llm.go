@@ -58,14 +58,14 @@ Rules:
 		return Finding{File: path, Type: "none"}, err
 	}
 
-	// --- robust parsing identično kao u local modu ---
+	// --- robust parsing  ---
 	out := modelOutput{}
 	raw := ""
 	if len(resp.Choices) > 0 {
 		raw = strings.TrimSpace(resp.Choices[0].Message.Content)
 	}
 
-	// skini code-fence ako postoji
+	// remove code-fence
 	low := strings.ToLower(raw)
 	if strings.HasPrefix(low, "```json") || strings.HasPrefix(low, "```") {
 		raw = strings.TrimPrefix(raw, "```json")
@@ -77,7 +77,7 @@ Rules:
 			raw = strings.TrimSpace(raw)
 		}
 	}
-	// izvuci prvi { ... } blok ako ne počinje sa '{'
+
 	if !strings.HasPrefix(strings.TrimSpace(raw), "{") {
 		if i := strings.Index(raw, "{"); i >= 0 {
 			if j := strings.LastIndex(raw, "}"); j >= 0 && j >= i {
@@ -87,7 +87,6 @@ Rules:
 	}
 	_ = json.Unmarshal([]byte(raw), &out)
 
-	// minimalna normalizacija + fallback
 	typ := strings.ToLower(strings.TrimSpace(out.Type))
 	if typ != "bug" && typ != "enhancement" && typ != "none" {
 		typ = "none"

@@ -12,15 +12,13 @@ import (
 
 type LocalFinding = Finding
 
-// AnalyzeLocal pročita lokalni fajl, po potrebi trunc-uje i pozove LLM.
-// Vraća nalaz i info da li je sadržaj trunc-ovan.
 func AnalyzeLocal(ctx context.Context, apiKey, model, absPath string, maxBytes int64) (LocalFinding, bool, error) {
 	code, truncated, err := readWithLimit(absPath, maxBytes)
 	if err != nil {
 		return LocalFinding{}, false, err
 	}
 	ff, err := analyzeSingleFile(ctx, apiKey, model, absPath, code, truncated)
-	return LocalFinding(ff), truncated, err // može i samo: return ff, truncated, err
+	return LocalFinding(ff), truncated, err
 }
 
 func readWithLimit(path string, maxBytes int64) (string, bool, error) {
@@ -33,8 +31,6 @@ func readWithLimit(path string, maxBytes int64) (string, bool, error) {
 	}
 	return string(b), false, nil
 }
-
-// ---- privatno: koristi isti JSON schema kao diff triage ----
 
 func analyzeSingleFile(ctx context.Context, apiKey, model, path, code string, truncated bool) (Finding, error) {
 	sys := `You are a senior code reviewer. Output STRICT JSON ONLY (no prose), following schema:
@@ -78,13 +74,13 @@ Important:
 	}
 	out := modelOutput{}
 
-	// izvuci raw tekst
+	// raw text
 	raw := ""
 	if len(resp.Choices) > 0 {
 		raw = strings.TrimSpace(resp.Choices[0].Message.Content)
 	}
 
-	// 1) skini code fence-ove ako ih ima
+	// 1) code fences
 	low := strings.ToLower(raw)
 	if strings.HasPrefix(low, "```json") || strings.HasPrefix(low, "```") {
 		raw = strings.TrimPrefix(raw, "```json")
@@ -97,7 +93,7 @@ Important:
 		}
 	}
 
-	// 2) ako i dalje ne počinje sa '{', izvuci prvi JSON blok
+	// 2) remove JSON block
 	if !strings.HasPrefix(strings.TrimSpace(raw), "{") {
 		if i := strings.Index(raw, "{"); i >= 0 {
 			if j := strings.LastIndex(raw, "}"); j >= 0 && j >= i {
@@ -106,10 +102,9 @@ Important:
 		}
 	}
 
-	// 3) pokušaj unmarshal
+	// 3)  unmarshal
 	_ = json.Unmarshal([]byte(raw), &out)
 
-	// 4) minimalna normalizacija + fallback
 	typ := strings.ToLower(strings.TrimSpace(out.Type))
 	if typ != "bug" && typ != "enhancement" && typ != "none" {
 		typ = "none"

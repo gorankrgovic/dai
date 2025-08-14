@@ -38,13 +38,12 @@ var triageLocalCmd = &cobra.Command{
 	Short: "Analyze a single local file and append findings to .dai/local.log",
 	Args:  cobra.ExactArgs(1),
 	RunE: func(cmd *cobra.Command, args []string) error {
-		// moramo biti u project root-u zbog .dai/
+
 		root, err := ensureProjectRoot()
 		if err != nil {
 			return err
 		}
 
-		// globalni config (OpenAI key + model)
 		cfg, err := config.Load()
 		if err != nil {
 			return fmt.Errorf("global config not found — run 'dai config' first: %w", err)
@@ -57,7 +56,6 @@ var triageLocalCmd = &cobra.Command{
 			return errors.New("OpenAI key missing — run 'dai config'")
 		}
 
-		// rezolvoj putanju fajla
 		p := args[0]
 		if !filepath.IsAbs(p) {
 			p = filepath.Join(root, p)
@@ -70,13 +68,11 @@ var triageLocalCmd = &cobra.Command{
 			return fmt.Errorf("path is a directory, expected a file: %s", p)
 		}
 
-		// analiza
 		finding, truncated, err := triage.AnalyzeLocal(cmd.Context(), cfg.OpenAIKey, model, p, int64(flagLocalMaxKB)*1024)
 		if err != nil {
 			return err
 		}
 
-		// pripremi log path
 		logPath := flagLocalLogPath
 		if !filepath.IsAbs(logPath) {
 			logPath = filepath.Join(root, logPath)
@@ -85,7 +81,6 @@ var triageLocalCmd = &cobra.Command{
 			return err
 		}
 
-		// upiši log u traženom formatu
 		now := time.Now().Format(time.RFC3339)
 		switch strings.ToLower(flagLocalFormat) {
 		case "json":

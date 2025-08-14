@@ -1,0 +1,23 @@
+# OS-specific files
+.DS_Store
+Thumbs.db
+
+# Binary builds
+dai
+*.exe
+*.dll
+*.so
+*.dylib
+
+# Archives
+*.zip
+*.tar.gz
+*.tar
+*.tgz
+
+# MkDocs build directory
+/site/
+
+# Temporary files
+*.tmp
+*.log

@@ -24,7 +24,7 @@ var configWizardCmd = &cobra.Command{
 	Use:   "wizard",
 	Short: "Interactive setup (OpenAI key + model)",
 	RunE: func(cmd *cobra.Command, args []string) error {
-		// 1) Key (sa maskiranjem)
+		// 1) Key
 		fmt.Print("Enter your OpenAI API key (input hidden): ")
 		secret, err := term.ReadPassword(int(os.Stdin.Fd()))
 		fmt.Println()
@@ -35,7 +35,7 @@ var configWizardCmd = &cobra.Command{
 			return fmt.Errorf("empty key")
 		}
 
-		// 2) Model (interaktivni select)
+		// 2) Model
 		var sel string
 		err = survey.AskOne(&survey.Select{
 			Message:  "Choose default model:",

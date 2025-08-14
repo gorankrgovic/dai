@@ -1,0 +1,25 @@
+site_name: DAI Documentation
+site_url: https://gorankrgovic.github.io/dai
+repo_url: https://github.com/gorankrgovic/dai
+repo_name: gorankrgovic/dai
+
+theme:
+  name: material
+  features:
+    - navigation.instant
+    - navigation.expand
+    - search.suggest
+    - search.highlight
+
+nav:
+  - Home: index.md
+  - Getting Started:
+      - Installation: installation.md
+      - Configuration: configuration.md
+      - GitHub Token: github-token.md
+  - Usage:
+      - Commands: commands.md
+      - Troubleshooting: troubleshooting.md
+  - Project:
+      - Contributing: contributing.md
+      - License: license.md
