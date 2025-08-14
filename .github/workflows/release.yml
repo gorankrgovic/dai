@@ -96,15 +96,42 @@ jobs:
       - uses: actions/download-artifact@v4
         with:
           path: dist
+
       - name: Gather files
         run: |
+          set -euo pipefail
           mkdir -p upload
-          find dist -type f -name "dai_*.*" -exec cp {} upload/ \;
-          # merge checksums
-          cat dist/**/checksums.txt > upload/checksums.txt
-      - name: Create GitHub Release
+          # pokupi sve archive fajlove iz svih matrix buildova
+          find dist -type f -name "dai_v*.tar.gz" -o -name "dai_v*.zip" -exec cp {} upload/ \;
+
+          # spoji checksums u jedan fajl
+          if ls dist/**/checksums.txt >/dev/null 2>&1; then
+            cat dist/**/checksums.txt > upload/checksums.txt
+          fi
+
+          # napravi "alias" fajlove bez verzije (za stable latest linkove)
+          VERSION="${GITHUB_REF_NAME}"          # npr. v0.2.0
+          VERSION_NOPREFIX="${VERSION#v}"       # 0.2.0
+          for f in upload/dai_v${VERSION_NOPREFIX}_*; do
+            base="$(basename "$f")"
+            alias="upload/${base/dai_v${VERSION_NOPREFIX}_/dai_}"
+            cp -f "$f" "$alias"
+          done
+
+      # (opciono) objavi i u PRIVATNI repo (koristi automatski GITHUB_TOKEN)
+      - name: Create Release (private repo)
         uses: softprops/action-gh-release@v2
         with:
           files: upload/*
           tag_name: ${{ github.ref_name }}
           generate_release_notes: true
+
+      # OBJAVI u PUBLIC repo gorankrgovic/dai-releases
+      - name: Create Release (public dai-releases)
+        uses: softprops/action-gh-release@v2
+        with:
+          repository: gorankrgovic/dai-releases
+          files: upload/*
+          tag_name: ${{ github.ref_name }}
+          generate_release_notes: true
+          token: ${{ secrets.RELEASES_TOKEN }}
