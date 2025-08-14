@@ -94,45 +94,20 @@ jobs:
     needs: build
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/download-artifact@v4
-        with:
-          path: dist
-          merge-multiple: true    # <<< sve fajlove spusti direktno u dist/
-
-      - name: Gather files
-        run: |
-          set -euo pipefail
-          mkdir -p upload
-          shopt -s nullglob
-
-          # kopiraj sve archive fajlove
-          cp dist/dai_v*.tar.gz upload/ || true
-          cp dist/dai_v*.zip    upload/ || true
-
-          # spoji checksums iz svih matrica
-          cat dist/checksums-*.txt > upload/checksums.txt
-
-          # napravi alias fajlove bez verzije (za /releases/latest/download/)
-          VERSION="${GITHUB_REF_NAME#v}"
-          for f in upload/dai_v${VERSION}_*; do
-            base="$(basename "$f")"
-            alias="upload/${base/dai_v${VERSION}_/dai_}"
-            cp -f "$f" "$alias"
-          done
-
-            # Checkout privatnog repoa na baš ovaj tag (za commit range)
+      # 1) Checkout privatnog repoa zbog git log-a (ovo MORA prvo)
       - name: Checkout private repo (for changelog)
         uses: actions/checkout@v4
         with:
           fetch-depth: 0
           ref: ${{ github.ref }}
 
+      # 2) Generiši changelog i upiši ga u upload/CHANGELOG.md
       - name: Generate changelog from commits
         run: |
           set -euo pipefail
           mkdir -p upload
 
-          CUR="${GITHUB_REF_NAME}"         # npr. v0.2.5
+          CUR="${GITHUB_REF_NAME}"
           PREV="$(git describe --tags --abbrev=0 "${CUR}^" 2>/dev/null || true)"
           if [ -z "${PREV}" ]; then
             RANGE="${CUR}"
@@ -174,13 +149,32 @@ jobs:
               }'
           } > upload/CHANGELOG.md
 
-          echo "=== CHANGELOG.md preview ==="
-          sed -n '1,120p' upload/CHANGELOG.md
+      # 3) Sada preuzmi artefakte iz build matrice
+      - uses: actions/download-artifact@v4
+        with:
+          path: dist
+          merge-multiple: true
+
+      # 4) Skupi fajlove (OVO više neće biti obrisano)
+      - name: Gather files
+        run: |
+          set -euo pipefail
+          mkdir -p upload
+          shopt -s nullglob
+          cp dist/dai_v*.tar.gz upload/ || true
+          cp dist/dai_v*.zip    upload/ || true
+          cat dist/checksums-*.txt > upload/checksums.txt
+          VERSION="${GITHUB_REF_NAME#v}"
+          for f in upload/dai_v${VERSION}_*; do
+            base="$(basename "$f")"
+            alias="upload/${base/dai_v${VERSION}_/dai_}"
+            cp -f "$f" "$alias"
+          done
 
       - name: (debug) list collected files
         run: ls -la upload
 
-      # PRIVATNI REPO (ostavi ako želiš dupli release)
+      # 5) Privatni release (kao do sada)
       - name: Create Release (private repo)
         uses: softprops/action-gh-release@v2
         with:
@@ -191,15 +185,15 @@ jobs:
           tag_name: ${{ github.ref_name }}
           generate_release_notes: true
 
-      # OBJAVI u PUBLIC repo gorankrgovic/dai-releases
+      # 6) Public release: BINARIES + CHANGELOG body
       - name: Create Release (public dai-releases)
         uses: softprops/action-gh-release@v2
         with:
           repository: gorankrgovic/dai-releases
           files: upload/*
-          tag_name: ${{ github.ref_name }}   # npr. v0.2.4
-          target_commitish: main             # target branch u PUBLIC repou
-          body_path: upload/CHANGELOG.md  # ⟵ dodato
+          tag_name: ${{ github.ref_name }}
+          target_commitish: main
+          body_path: upload/CHANGELOG.md
           generate_release_notes: false
         env:
-          GITHUB_TOKEN: ${{ secrets.RELEASES_TOKEN }}  # obavezno: PAT sa Contents: Read&Write
+          GITHUB_TOKEN: ${{ secrets.RELEASES_TOKEN }}
