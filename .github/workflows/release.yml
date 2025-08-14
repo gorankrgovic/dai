@@ -89,7 +89,6 @@ jobs:
             dist/dai_${{ env.VERSION }}_${{ matrix.goos }}-${{ matrix.goarch }}.zip
             dist/checksums-*.txt
           if-no-files-found: error
-
   release:
     needs: build
     runs-on: ubuntu-latest
@@ -97,33 +96,79 @@ jobs:
       - uses: actions/download-artifact@v4
         with:
           path: dist
-          merge-multiple: true    # <<< sve fajlove spusti direktno u dist/
+          merge-multiple: true
 
-      - name: Gather files
+      - name: Gather files (for PRIVATE release)
         run: |
           set -euo pipefail
           mkdir -p upload
           shopt -s nullglob
 
-          # kopiraj sve archive fajlove
+          # verzionisani arhivi za privatni release
           cp dist/dai_v*.tar.gz upload/ || true
           cp dist/dai_v*.zip    upload/ || true
 
-          # spoji checksums iz svih matrica
+          # merge checksums iz svih matrica
           cat dist/checksums-*.txt > upload/checksums.txt
 
-          # napravi alias fajlove bez verzije (za /releases/latest/download/)
-          VERSION="${GITHUB_REF_NAME#v}"
-          for f in upload/dai_v${VERSION}_*; do
-            base="$(basename "$f")"
-            alias="upload/${base/dai_v${VERSION}_/dai_}"
-            cp -f "$f" "$alias"
-          done
+      # Checkout PRIVATNOG repoa na baš ovaj tag, da izvučemo commit-e
+      - name: Checkout private repo (for changelog)
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          ref: ${{ github.ref }}
+
+      - name: Generate changelog from commits
+        run: |
+          set -euo pipefail
+          mkdir -p upload
+
+          CUR="${GITHUB_REF_NAME}"         # npr. v0.2.5
+          PREV="$(git describe --tags --abbrev=0 "${CUR}^" 2>/dev/null || true)"
+          if [ -z "${PREV}" ]; then
+            RANGE="${CUR}"
+            RANGE_HUMAN="initial"
+          else
+            RANGE="${PREV}..${CUR}"
+            RANGE_HUMAN="${PREV}…${CUR}"
+          fi
+
+          {
+            echo "# ${CUR}"
+            echo
+            echo "_Changes from ${RANGE_HUMAN}_"
+            echo
+            git log --no-merges --pretty=format:'- %s (%h)' ${RANGE} \
+            | awk '
+              function emit(title, arr,    i){ if(length(arr)>0){ print "### " title; for(i=1;i<=length(arr);i++) print arr[i]; print "" }}
+              BEGIN{ nf=0; nfx=0; np=0; nr=0; nd=0; nc=0; nt=0; no=0 }
+              {
+                line=$0
+                if (line ~ /^- (feat|feat!|\[feat\])/){ feat[++nf]=line }
+                else if (line ~ /^- (fix|fix!|\[fix\])/){ fixes[++nfx]=line }
+                else if (line ~ /^- (perf|perf!|\[perf\])/){ perf[++np]=line }
+                else if (line ~ /^- (refactor|refactor!|\[refactor\])/){ refa[++nr]=line }
+                else if (line ~ /^- (docs|docs!|\[docs\])/){ docs[++nd]=line }
+                else if (line ~ /^- (chore|build)/){ chore[++nc]=line }
+                else if (line ~ /^- (test|tests)/){ tests[++nt]=line }
+                else { other[++no]=line }
+              }
+              END{
+                emit("Features", feat)
+                emit("Fixes", fixes)
+                emit("Performance", perf)
+                emit("Refactors", refa)
+                emit("Docs", docs)
+                emit("Chore/Build", chore)
+                emit("Tests", tests)
+                emit("Other", other)
+              }'
+          } > upload/CHANGELOG.md
 
       - name: (debug) list collected files
         run: ls -la upload
 
-      # PRIVATNI REPO (ostavi ako želiš dupli release)
+      # PRIVATNI REPO: verzionisani fajlovi + checksums
       - name: Create Release (private repo)
         uses: softprops/action-gh-release@v2
         with:
@@ -134,14 +179,14 @@ jobs:
           tag_name: ${{ github.ref_name }}
           generate_release_notes: true
 
-      # OBJAVI u PUBLIC repo gorankrgovic/dai-releases
+      # PUBLIC REPO: SAMO changelog kao body (bez fajlova)
       - name: Create Release (public dai-releases)
         uses: softprops/action-gh-release@v2
         with:
           repository: gorankrgovic/dai-releases
-          files: upload/*
-          tag_name: ${{ github.ref_name }}   # npr. v0.2.4
-          target_commitish: main             # target branch u PUBLIC repou
-          generate_release_notes: true
+          tag_name: ${{ github.ref_name }}
+          target_commitish: main
+          body_path: upload/CHANGELOG.md
+          generate_release_notes: false
         env:
-          GITHUB_TOKEN: ${{ secrets.RELEASES_TOKEN }}  # obavezno: PAT sa Contents: Read&Write
+          GITHUB_TOKEN: ${{ secrets.RELEASES_TOKEN }}
